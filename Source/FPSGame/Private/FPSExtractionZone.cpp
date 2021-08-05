@@ -45,7 +45,7 @@ void AFPSExtractionZone::HandleOverlap(UPrimitiveComponent* OverlappedComponent,
 		if(MyGameMode)
 		{
 			// Tell the game mode we have completed the mission
-			MyGameMode->CompleteMission(MyPawn);
+			MyGameMode->CompleteMission(MyPawn, true);
 		}
 	}
 	else
