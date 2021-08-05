@@ -15,6 +15,9 @@ AFPSObjectiveActor::AFPSObjectiveActor()
 	// Turn off its collision
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// Make the Static Mesh Component the ROOT component
+	RootComponent = MeshComp;
+	
 	// Create a Sphere Component
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	// Setup Collision to Query Only
@@ -25,9 +28,6 @@ AFPSObjectiveActor::AFPSObjectiveActor()
 	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	// Make it a Child of the Static Mesh Component
 	SphereComp->SetupAttachment(MeshComp);
-
-	// Make the Static Mesh Component the ROOT component
-	RootComponent = MeshComp;
 }
 
 // Called when the game starts or when spawned
