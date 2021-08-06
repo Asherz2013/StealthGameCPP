@@ -2,6 +2,7 @@
 
 #include "FPSCharacter.h"
 #include "FPSProjectile.h"
+#include "UnrealNetwork.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -48,24 +49,24 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 }
 
+void AFPSCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// When we are NOT locally controller, we want the server to send to other players what angle we are looking at.
+	if(!IsLocallyControlled())
+	{
+		FRotator NewRot = CameraComponent->GetRelativeRotation();
+		NewRot.Pitch = RemoteViewPitch * 360.0 / 255.0f;
+		CameraComponent->SetRelativeRotation(NewRot);
+	}
+}
+
 
 void AFPSCharacter::Fire()
 {
-	// try and fire a projectile
-	if (ProjectileClass)
-	{
-		FVector MuzzleLocation = GunMeshComponent->GetSocketLocation("Muzzle");
-		FRotator MuzzleRotation = GunMeshComponent->GetSocketRotation("Muzzle");
-
-		//Set Spawn Collision Handling Override
-		FActorSpawnParameters ActorSpawnParams;
-		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-		ActorSpawnParams.Instigator = this;
-		
-		// spawn the projectile at the muzzle
-		GetWorld()->SpawnActor<AFPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, ActorSpawnParams);
-	}
-
+	ServerFire();
+	
 	// try and play the sound if specified
 	if (FireSound)
 	{
@@ -82,6 +83,31 @@ void AFPSCharacter::Fire()
 			AnimInstance->PlaySlotAnimationAsDynamicMontage(FireAnimation, "Arms", 0.0f);
 		}
 	}
+}
+
+void AFPSCharacter::ServerFire_Implementation()
+{
+	// try and fire a projectile
+	if (ProjectileClass)
+	{
+		const FVector MuzzleLocation = GunMeshComponent->GetSocketLocation("Muzzle");
+		const FRotator MuzzleRotation = GunMeshComponent->GetSocketRotation("Muzzle");
+
+		//Set Spawn Collision Handling Override
+		FActorSpawnParameters ActorSpawnParams;
+		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+		ActorSpawnParams.Instigator = this;
+		
+		// spawn the projectile at the muzzle
+		GetWorld()->SpawnActor<AFPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, ActorSpawnParams);
+	}
+}
+
+// This is the place to put "cheating" checks.
+// If this returns FALSE then the Client who called it will get a HARD DISCONNECT! 
+bool AFPSCharacter::ServerFire_Validate()
+{
+	return true;
 }
 
 
@@ -102,4 +128,13 @@ void AFPSCharacter::MoveRight(float Value)
 		// add movement in that direction
 		AddMovementInput(GetActorRightVector(), Value);
 	}
+}
+
+// Using this function allows replicated actors to always be replicated so we do need to constantly call "OnRep_"
+void AFPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFPSCharacter, bIsCarryObjective);
+	// Only gets replicated to the Owning Character (also Optimisation)
+	//DOREPLIFETIME_CONDITION(AFPSCharacter, bIsCarryObjective, COND_OwnerOnly);
 }

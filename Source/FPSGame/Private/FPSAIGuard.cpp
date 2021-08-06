@@ -5,6 +5,7 @@
 
 #include "DrawDebugHelpers.h"
 #include "FPSGameMode.h"
+#include "UnrealNetwork.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Perception/PawnSensingComponent.h"
 
@@ -140,7 +141,18 @@ void AFPSAIGuard::SetGuardState(EAIState NewState)
 	}
 	
 	GuardState = NewState;
-
-	OnGuardStateChanged(NewState);
+	// Blue Print function
+	OnGuardStateChanged(GuardState);
 }
 
+void AFPSAIGuard::OnRep_GuardState()
+{
+	OnGuardStateChanged(GuardState);
+}
+
+void AFPSAIGuard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AFPSAIGuard, GuardState);
+}

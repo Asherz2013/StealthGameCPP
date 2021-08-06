@@ -37,15 +37,16 @@ void AFPSExtractionZone::HandleOverlap(UPrimitiveComponent* OverlappedComponent,
 	{
 		return;
 	}
+	
 	UE_LOG(LogTemp, Log, TEXT("Overlapped with extration zone!"));
 	if(MyPawn->bIsCarryObjective)
 	{
 		// Grab the Game Mode (cast to my game mode)
-		AFPSGameMode* MyGameMode = Cast<AFPSGameMode>(GetWorld()->GetAuthGameMode());
-		if(MyGameMode)
+		AFPSGameMode* GM = Cast<AFPSGameMode>(GetWorld()->GetAuthGameMode());
+		if(GM)
 		{
 			// Tell the game mode we have completed the mission
-			MyGameMode->CompleteMission(MyPawn, true);
+			GM->CompleteMission(MyPawn, true);
 		}
 	}
 	else

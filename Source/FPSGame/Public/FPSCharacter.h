@@ -52,13 +52,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
 	UAnimSequence* FireAnimation;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Gameplay")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Gameplay")
 	bool bIsCarryObjective;
 
 protected:
 	
 	/** Fires a projectile. */
 	void Fire();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerFire();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
@@ -68,12 +71,13 @@ protected:
 
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
+	virtual void Tick(float DeltaTime) override;
+
 public:
 	/** Returns Mesh1P subobject **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1PComponent; }
 
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return CameraComponent; }
-
 };
 

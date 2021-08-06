@@ -1,6 +1,8 @@
 // Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 #include "FPSGameMode.h"
+
+#include "FPSGameState.h"
 #include "FPSHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
@@ -13,35 +15,45 @@ AFPSGameMode::AFPSGameMode()
 
 	// use our custom HUD class
 	HUDClass = AFPSHUD::StaticClass();
+
+	GameStateClass = AFPSGameState::StaticClass();
 }
 
-void AFPSGameMode::CompleteMission(APawn* InstigatorPawn, bool MissionSuccess)
+void AFPSGameMode::CompleteMission(APawn* InstigatorPawn, bool bMissionSuccess)
 {
 	if(InstigatorPawn)
 	{
-		InstigatorPawn->DisableInput(nullptr);
-	}
-
-	if(SpectatingViewpoint)
-	{
-		TArray<AActor*> ReturnedActors;
-		UGameplayStatics::GetAllActorsOfClass(this, SpectatingViewpoint, ReturnedActors);
-
-		if (ReturnedActors.Num() > 0)
+		if(SpectatingViewpoint)
 		{
-			AActor* NewViewTarget = ReturnedActors[0];
+			TArray<AActor*> ReturnedActors;
+			UGameplayStatics::GetAllActorsOfClass(this, SpectatingViewpoint, ReturnedActors);
 
-			APlayerController* PC = Cast<APlayerController>(InstigatorPawn->GetController());
-			if(PC)
+			if (ReturnedActors.Num() > 0)
 			{
-				PC->SetViewTargetWithBlend(NewViewTarget, 0.5f, EViewTargetBlendFunction::VTBlend_Cubic);
+				AActor* NewViewTarget = ReturnedActors[0];
+
+				for (FConstPlayerControllerIterator PCIt = GetWorld()->GetPlayerControllerIterator(); PCIt; ++PCIt)
+				{
+					APlayerController* PC = PCIt->Get();
+					if(PC)
+					{
+						PC->SetViewTargetWithBlend(NewViewTarget, 0.5f, EViewTargetBlendFunction::VTBlend_Cubic);
+					}
+				}
 			}
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SpectatingViewpointClass is nullptr. Please update GameMode class with valid Subclass. Cannot change spectating view target"));
+		}
 	}
-	else
+
+	AFPSGameState* GS = GetGameState<AFPSGameState>();
+	if(GS)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SpectatingViewpointClass is nullptr. Please update GameMode class with valid Subclass. Cannot change spectating view target"));
+		GS->MulticastOnMissionComplete(InstigatorPawn, bMissionSuccess);
 	}
 	
-	OnMissionCompleted(InstigatorPawn, MissionSuccess);
+	// Blue Print calls this!
+	OnMissionCompleted(InstigatorPawn, bMissionSuccess);
 }
