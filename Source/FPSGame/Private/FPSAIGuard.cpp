@@ -111,7 +111,7 @@ void AFPSAIGuard::Tick(float DeltaTime)
 		const FVector Delta = GetActorLocation() - PatrolPoints[CurrentPatrolPoint]->GetActorLocation();
 		const float Distance = Delta.Size();
 
-		if(Distance < 50)
+		if(Distance <= 60)
 		{
 			MoveToNextPatrolPoint();
 		}

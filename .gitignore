@@ -72,3 +72,7 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# I Moved the RiderLink to the Game Folder.
+# However I may not want to use RiderLink in the future so don't push it
+Plugins/Developer/RiderLink/*
